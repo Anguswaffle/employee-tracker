@@ -1,7 +1,7 @@
-DROP DATABASE IF EXISTS kemployee_db;
-CREATE DATABASE kemployee_db;
+DROP DATABASE IF EXISTS kemployees_db;
+CREATE DATABASE kemployees_db;
 
-USE kemployee_db;
+USE kemployees_db;
 
 CREATE TABLE department (
   id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,

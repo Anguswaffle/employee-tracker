@@ -1,5 +1,6 @@
 const inquirer = require('inquirer');
 
+// Prompts array
 const questions = [
   {
     type: 'list',
@@ -97,8 +98,15 @@ const questions = [
 
 inquirer.prompt(questions)
 
+const trackEmployees = async () => {
+  const { root, ...answers } = await inquirer.prompt(questions);
+  const again = root !== 'Quit';
+  return again ? trackEmployees() : answers;
+}
 
 
+
+module.exports = trackEmployees;
 
 /**
  * What would you like to do?
@@ -117,4 +125,9 @@ View all department -> (display * from departments)
 Add department -> What is the name of the department? -> Back to beginning prompt
 
 Quit
+ */
+
+
+/**
+ * 
  */
