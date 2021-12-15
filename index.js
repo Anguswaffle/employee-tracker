@@ -35,7 +35,7 @@ const questions = [
     name: 'newEmployeeRole',
     message: `What is the employee's role?`,
     when: (answers) => answers.root === 'Add employee',
-    choices: ['DISPLAY ALL THE ROLES HERE']
+    choices: ['Manager', 'Worker']
   },
   {
     type: 'list',
@@ -105,18 +105,19 @@ const trackEmployees = async () => {
   const again = answers.root !== 'Quit';
 
   const queryThis = rootSwitch(answers)
-  console.log(queryThis)
-  db.query(queryThis, (err, result) => {
-    if (err) {
-      console.log(err);
-    }
-    console.table(result);
-  });
+  
+  // db.query(queryThis, (err, result) => {
+  //   if (err) {
+  //     console.log(err);
+  //   }
+  //   console.table(result);
+  // });
 
-  return again ? trackEmployees() : console.log('You fucking rock')
+  // return again ? trackEmployees() : console.log('You fucking rock')
+  return answers;
 }
 
-trackEmployees();
+// trackEmployees();
 
 
 module.exports = trackEmployees;

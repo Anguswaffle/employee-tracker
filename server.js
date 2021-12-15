@@ -1,7 +1,7 @@
 const express = require('express');
 const mysql = require('mysql2');
 const trackEmployees = require('./index')
-const { getEmployees, getDepartments, getManagers, getRoles } = require('./helpers/utils')
+const { addEmployee, getEmployees, getDepartments, getManagers, getRoles, rootSwitch, getRoleId } = require('./helpers/utils')
 
 const PORT = process.env.PORT || 3001;
 const app = express();
@@ -19,6 +19,16 @@ const db = mysql.createConnection(
   console.log(`Connected to the kemployees_db database.`)
 );
 
+// const answers = trackEmployees();
+
+
+
+// db.promise().query(getEmployees())
+//   .then( (data) => {
+//     console.table(data);
+//   })
+//   .catch(console.log)
+//   .then( () => console.end);
 
 // db.query()
 // loop {
@@ -31,13 +41,24 @@ const db = mysql.createConnection(
 //   })
 // }
 
+// const testThis = async () => {
+//   const answers = await trackEmployees();
 
-// db.query(getManagers(), (err, result) => {
-//   if (err) {
-//     console.log(err);
-//   }
-//   console.table(result);
-// });
+//   db.query(getRoleId(answers.newEmployeeRole), (err, result) => {
+//     if (err) {
+//       console.log(err);
+//     }
+//     console.log(result[0].id)
+//     db.query(addEmployee(answers), result[0].id, (err, result) => {
+//       if (err) {
+//         console.log(err);
+//       }
+//       console.table(result)
+//     });
+//   })
+// }
+
+testThis();
 
 app.use((req, res) => {
 

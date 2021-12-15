@@ -1,35 +1,37 @@
-const getEmployees = () => {
-  return `SELECT * FROM employee;`
-}
+const selectStr = 'SELECT * FROM ?'
 
-const getDepartments = () => {
-  return `SELECT * FROM department;`
-}
+// const getEmployees = () => {
+//   return `SELECT * FROM employee;`
+// }
 
-const getRoles = () => {
-  return `SELECT * FROM role;`
-}
+// const getDepartments = () => {
+//   return `SELECT * FROM department;`
+// }
 
-const getManagers = () => {
-  return `SELECT first_name, last_name FROM employee e JOIN role r ON r.id = e.role_id WHERE r.title = 'Manager';`
-}
+// const getRoles = () => {
+//   return `SELECT * FROM role;`
+// }
 
-const addEmployee = (answers) => {
-  return `INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ('${answers.firstName}', '${answers.lastName}', 1, NULL)`
-}
+// const getManagers = () => {
+//   return `SELECT first_name, last_name FROM employee e JOIN role r ON r.id = e.role_id WHERE r.title = 'Manager';`
+// }
 
-const getRoleId = (role) => {
-  return `SELECT id FROM role WHERE title = '${role}'`
-}
+// const addEmployee = (answers) => {
+//   return (`INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ('${answers.firstName}', '${answers.lastName}', ?, NULL)`)
+// }
 
-const rootSwitch = (answers) => {
+// const getRoleId = (role) => {
+//   return `SELECT id FROM role WHERE title = '${role}'`
+// }
 
-  switch (answers.root) {
-    case 'View all departments': return getDepartments();
-    case 'View all employees': return getEmployees();
-    case 'View all roles': return getRoles();
-    case 'Add employee': return addEmployee(answers);
-  }
-}
+// const rootSwitch = (answers) => {
 
-module.exports = { getEmployees, getDepartments, getManagers, getRoles, rootSwitch };
+//   switch (answers.root) {
+//     case 'View all departments': return getDepartments();
+//     case 'View all employees': return getEmployees();
+//     case 'View all roles': return getRoles();
+//     case 'Add employee': return addEmployee(answers);
+//   }
+// }
+
+module.exports = { addEmployee, getEmployees, getDepartments, getManagers, getRoles, rootSwitch, getRoleId};
