@@ -32,12 +32,12 @@ const db = mysql.createConnection(
 // }
 
 
-db.query(getManagers(), (err, result) => {
-  if (err) {
-    console.log(err);
-  }
-  console.table(result);
-});
+// db.query(getManagers(), (err, result) => {
+//   if (err) {
+//     console.log(err);
+//   }
+//   console.table(result);
+// });
 
 app.use((req, res) => {
 
@@ -50,3 +50,5 @@ app.use((req, res) => {
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
+module.exports = db;

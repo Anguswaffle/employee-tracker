@@ -1,4 +1,6 @@
 const inquirer = require('inquirer');
+const db = require('./server')
+const { getEmployees, getDepartments, getManagers, getRoles, rootSwitch } = require('./helpers/utils')
 
 // Prompts array
 const questions = [
@@ -99,11 +101,22 @@ const questions = [
 // inquirer.prompt(questions)
 
 const trackEmployees = async () => {
-  const { root, ...answers } = await inquirer.prompt(questions);
-  return
+  const answers = await inquirer.prompt(questions);
+  const again = answers.root !== 'Quit';
 
+  const queryThis = rootSwitch(answers)
+  console.log(queryThis)
+  db.query(queryThis, (err, result) => {
+    if (err) {
+      console.log(err);
+    }
+    console.table(result);
+  });
+
+  return again ? trackEmployees() : console.log('You fucking rock')
 }
 
+trackEmployees();
 
 
 module.exports = trackEmployees;
@@ -129,5 +142,5 @@ Quit
 
 
 /**
- * 
+ *
  */
