@@ -96,12 +96,12 @@ const questions = [
   }
 ]
 
-inquirer.prompt(questions)
+// inquirer.prompt(questions)
 
 const trackEmployees = async () => {
   const { root, ...answers } = await inquirer.prompt(questions);
-  const again = root !== 'Quit';
-  return again ? trackEmployees() : answers;
+  return
+
 }
 
 
