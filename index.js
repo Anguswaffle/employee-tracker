@@ -2,6 +2,7 @@ const logo = require('asciiart-logo');
 const inquirer = require('inquirer');
 const config = require('./package.json');
 const mysql = require('mysql2');
+const { selectStr } = require('./db/utils')
 
 const db = mysql.createConnection(
   {
@@ -18,40 +19,7 @@ console.log(logo(config).render());
 
 // Prompts array
 const questions = [
-  {
-    type: 'input',
-    name: 'firstName',
-    message: 'What is the employee\'s first name?',
-    when: (answers) => answers.root === 'Add employee',
-    validate: firstName => {
-      if (firstName.length > 0 && firstName.length <= 30) return true;
-      return `Employee must have a first name shorter between 1 and 30 characters.`
-    }
-  },
-  {
-    type: 'input',
-    name: 'lastName',
-    message: 'What is the employee\'s first name?',
-    when: (answers) => answers.root === 'Add employee',
-    validate: lastName => {
-      if (lastName.length > 0 && lastName.length <= 30) return true;
-      return `Employee must have a last name shorter between 1 and 30 characters.`
-    }
-  },
-  {
-    type: 'list',
-    name: 'newEmployeeRole',
-    message: `What is the employee's role?`,
-    when: (answers) => answers.root === 'Add employee',
-    choices: ['Manager', 'Worker']
-  },
-  {
-    type: 'list',
-    name: 'managerName',
-    message: `Who is the employee's manager?`,
-    when: (answers) => answers.root === 'Add employee',
-    choices: ['None', 'DISPLAY ALL THE OTHER MANAGERS']
-  },
+
   {
     type: 'list',
     name: 'employee',
@@ -115,10 +83,73 @@ const init = async () => {
     choices: ['View all employees', 'Add employee', 'Update employee role', 'View all roles', 'Add role', 'View all departments', 'Add department', 'Quit']
   }
   const { root } = await inquirer.prompt(question);
-
   const again = root !== 'Quit';
-  return again ? init() : console.log('')
+
+  caseSwitch(root)
+
+  return again ? init() : console.log('Thanks for tracking your employees!')
 }
+
+const getRoles = () => {
+  let test = [];
+  db.query(selectStr, ['title', 'role'], (err, results) => {
+    if(err) console.error(err);
+    else results.forEach(obj => test.push(obj.title));
+    return test;
+  }) 
+  console.log(`Will this work? ${test}`)
+}
+
+// console.log(getRole());
+// console.log('This is not gonna work' + getRoles());
+
+const addEmployee = async () => {
+  const roles = await getRoles()
+
+  const questions = [  
+  {
+    type: 'input',
+    name: 'firstName',
+    message: 'What is the employee\'s first name?',
+    validate: firstName => {
+      if (firstName.length > 0 && firstName.length <= 30) return true;
+      return `Employee must have a first name shorter between 1 and 30 characters.`
+    }
+  },
+  {
+    type: 'input',
+    name: 'lastName',
+    message: 'What is the employee\'s first name?',
+    validate: lastName => {
+      if (lastName.length > 0 && lastName.length <= 30) return true;
+      return `Employee must have a last name shorter between 1 and 30 characters.`
+    }
+  },
+  {
+    type: 'list',
+    name: 'newEmployeeRole',
+    message: `What is the employee's role?`,
+    choices: roles
+  },
+  {
+    type: 'list',
+    name: 'managerName',
+    message: `Who is the employee's manager?`,
+    choices: ['None', 'DISPLAY ALL THE OTHER MANAGERS']
+  }]
+
+  const answers = await inquirer.prompt(questions);
+
+  db.query(selectStr, 'role', (err, results) => {
+
+  })
+
+
+}
+
+// addEmployee();
+
+// init();
 
 
 

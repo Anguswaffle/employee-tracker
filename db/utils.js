@@ -1,4 +1,6 @@
-const selectStr = 'SELECT * FROM ?'
+const selectStr = 'SELECT ?? FROM ??'
+
+module.exports = { selectStr }
 
 // const getEmployees = () => {
 //   return `SELECT * FROM employee;`
@@ -33,5 +35,3 @@ const selectStr = 'SELECT * FROM ?'
 //     case 'Add employee': return addEmployee(answers);
 //   }
 // }
-
-module.exports = { addEmployee, getEmployees, getDepartments, getManagers, getRoles, rootSwitch, getRoleId};
