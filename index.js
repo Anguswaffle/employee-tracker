@@ -1,15 +1,23 @@
+const logo = require('asciiart-logo');
 const inquirer = require('inquirer');
-const db = require('./server')
-const { getEmployees, getDepartments, getManagers, getRoles, rootSwitch } = require('./helpers/utils')
+const config = require('./package.json');
+const mysql = require('mysql2');
+
+const db = mysql.createConnection(
+  {
+    host: 'localhost',
+    user: 'root',
+    password: 'Password1',
+    database: 'kemployees_db'
+  },
+  console.log(`Connected to the kemployees_db database.`)
+);
+
+// asciiart-logo styled splash screen
+console.log(logo(config).render());
 
 // Prompts array
 const questions = [
-  {
-    type: 'list',
-    name: 'root',
-    message: 'What would you like to do?',
-    choices: ['View all employees', 'Add employee', 'Update employee role', 'View all roles', 'Add role', 'View all departments', 'Add department', 'Quit']
-  },
   {
     type: 'input',
     name: 'firstName',
@@ -98,30 +106,55 @@ const questions = [
   }
 ]
 
+
+const init = async () => {
+  const question = {
+    type: 'list',
+    name: 'root',
+    message: 'What would you like to do?',
+    choices: ['View all employees', 'Add employee', 'Update employee role', 'View all roles', 'Add role', 'View all departments', 'Add department', 'Quit']
+  }
+  const { root } = await inquirer.prompt(question);
+
+  const again = root !== 'Quit';
+  return again ? init() : console.log('')
+}
+
+
+
 // inquirer.prompt(questions)
 
-const trackEmployees = async () => {
-  const answers = await inquirer.prompt(questions);
-  const again = answers.root !== 'Quit';
-
-  const queryThis = rootSwitch(answers)
+// const trackEmployees = async () => {
   
-  // db.query(queryThis, (err, result) => {
-  //   if (err) {
-  //     console.log(err);
-  //   }
-  //   console.table(result);
-  // });
+//   const answers = await inquirer.prompt(questions);
+//   const again = answers.root !== 'Quit';
 
-  // return again ? trackEmployees() : console.log('You fucking rock')
-  return answers;
-}
+//   // const queryThis = rootSwitch(answers)
+
+//   // db.query(queryThis, (err, result) => {
+//   //   if (err) {
+//   //     console.log(err);
+//   //   }
+//   //   console.table(result);
+//   // });
+
+//   // return again ? trackEmployees() : console.log('You fucking rock')
+//   return answers;
+// }
 
 // trackEmployees();
 
+// const init = async () => {
+//   const answers = await trackEmployees();
+//   db.query(answers, (err, result) => {
+//     if (err) {
+//       console.log(err);
+//     }
+//     console.table(result)
+//   })
+// }
 
-module.exports = trackEmployees;
-
+// init();
 /**
  * What would you like to do?
 View all employees -> (returns all employees)
