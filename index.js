@@ -2,7 +2,7 @@ const logo = require('asciiart-logo');
 const inquirer = require('inquirer');
 const config = require('./package.json');
 const mysql = require('mysql2');
-const { selectStr } = require('./db/utils')
+const { selectStr, selectNames } = require('./db/utils')
 
 const db = mysql.createConnection(
   {
@@ -91,62 +91,61 @@ const init = async () => {
 }
 
 const getRoles = () => {
-  let test = [];
+
   db.query(selectStr, ['title', 'role'], (err, results) => {
-    if(err) console.error(err);
-    else results.forEach(obj => test.push(obj.title));
-    return test;
-  }) 
-  console.log(`Will this work? ${test}`)
+    if (err) console.error(err);
+    else {
+      const test = results.map(obj => obj.title);
+      addEmployee(test)
+    }
+  })
 }
 
-// console.log(getRole());
-// console.log('This is not gonna work' + getRoles());
 
-const addEmployee = async () => {
-  const roles = await getRoles()
 
-  const questions = [  
-  {
-    type: 'input',
-    name: 'firstName',
-    message: 'What is the employee\'s first name?',
-    validate: firstName => {
-      if (firstName.length > 0 && firstName.length <= 30) return true;
-      return `Employee must have a first name shorter between 1 and 30 characters.`
-    }
-  },
-  {
-    type: 'input',
-    name: 'lastName',
-    message: 'What is the employee\'s first name?',
-    validate: lastName => {
-      if (lastName.length > 0 && lastName.length <= 30) return true;
-      return `Employee must have a last name shorter between 1 and 30 characters.`
-    }
-  },
-  {
-    type: 'list',
-    name: 'newEmployeeRole',
-    message: `What is the employee's role?`,
-    choices: roles
-  },
-  {
-    type: 'list',
-    name: 'managerName',
-    message: `Who is the employee's manager?`,
-    choices: ['None', 'DISPLAY ALL THE OTHER MANAGERS']
-  }]
+const addEmployee = async (roles) => {
+
+  const questions = [
+    {
+      type: 'input',
+      name: 'firstName',
+      message: 'What is the employee\'s first name?',
+      validate: firstName => {
+        if (firstName.length > 0 && firstName.length <= 30) return true;
+        return `Employee must have a first name shorter between 1 and 30 characters.`
+      }
+    },
+    {
+      type: 'input',
+      name: 'lastName',
+      message: 'What is the employee\'s first name?',
+      validate: lastName => {
+        if (lastName.length > 0 && lastName.length <= 30) return true;
+        return `Employee must have a last name shorter between 1 and 30 characters.`
+      }
+    },
+    {
+      type: 'list',
+      name: 'newEmployeeRole',
+      message: `What is the employee's role?`,
+      choices: roles
+    },
+    {
+      type: 'list',
+      name: 'managerName',
+      message: `Who is the employee's manager?`,
+      choices: ['None', 'DISPLAY ALL THE OTHER MANAGERS']
+    }]
 
   const answers = await inquirer.prompt(questions);
-
-  db.query(selectStr, 'role', (err, results) => {
-
-  })
-
-
+  
 }
 
+db.query(selectNames, (err, results) => {
+  if(err) console.error(err)
+  else console.log(results)
+})
+// getRoles();
 // addEmployee();
 
 // init();
@@ -156,7 +155,7 @@ const addEmployee = async () => {
 // inquirer.prompt(questions)
 
 // const trackEmployees = async () => {
-  
+
 //   const answers = await inquirer.prompt(questions);
 //   const again = answers.root !== 'Quit';
 
