@@ -2,7 +2,7 @@ const logo = require('asciiart-logo');
 const inquirer = require('inquirer');
 const config = require('./package.json');
 const mysql = require('mysql2');
-const { selectStr, selectNames } = require('./db/utils')
+const { selectStr, selectNames, selectManagers } = require('./db/utils')
 
 const db = mysql.createConnection(
   {
@@ -13,6 +13,8 @@ const db = mysql.createConnection(
   },
   console.log(`Connected to the kemployees_db database.`)
 );
+
+const promisePool = db.promise();
 
 // asciiart-logo styled splash screen
 console.log(logo(config).render());
@@ -74,7 +76,7 @@ const questions = [
   }
 ]
 
-
+// Initiates employee tracker program
 const init = async () => {
   const question = {
     type: 'list',
@@ -90,21 +92,47 @@ const init = async () => {
   return again ? init() : console.log('Thanks for tracking your employees!')
 }
 
-const getRoles = () => {
+// const getRoles = () => {
+//   db.query(selectStr, 'role', (err, results) => {
+//     if (err) console.error(err);
+//     else {
+//       addEmployee(results.map(result => result.title))
+//     }
+//   })
+// }
 
-  db.query(selectStr, ['title', 'role'], (err, results) => {
-    if (err) console.error(err);
-    else {
-      const test = results.map(obj => obj.title);
-      addEmployee(test)
-    }
-  })
+const getRoleTitles = async () => {
+  // const promisePool = db.promise();
+  const [rows, fields] = await promisePool.query(selectStr, 'role');
+  return rows.map(row => row.title);
 }
 
+const getManagers = async () => {
+  const [rows, fields] = await promisePool.query(selectManagers)
+  return rows.map(row => row.first_name);
+}
+
+// router.get('/', async (req, res) => {
+//   // Store the bookData in a variable once the promise is resolved.
+//   const bookData = await Book.findAll();
+
+//   // Return the bookData promise inside of the JSON response
+//   return res.json(bookData);
+// });
 
 
-const addEmployee = async (roles) => {
+/**
+ * I want a query that brings back
+ * role titles
+ * role title IDs
+ * 
+ * all employees that have the title Manager
+ */
 
+const addEmployee = async () => {
+  // const roles = data.map(role => role.title)
+  const roles = await getRoleTitles();
+  const managers = await getManagers();
   const questions = [
     {
       type: 'input',
@@ -118,7 +146,7 @@ const addEmployee = async (roles) => {
     {
       type: 'input',
       name: 'lastName',
-      message: 'What is the employee\'s first name?',
+      message: 'What is the employee\'s last name?',
       validate: lastName => {
         if (lastName.length > 0 && lastName.length <= 30) return true;
         return `Employee must have a last name shorter between 1 and 30 characters.`
@@ -134,22 +162,21 @@ const addEmployee = async (roles) => {
       type: 'list',
       name: 'managerName',
       message: `Who is the employee's manager?`,
-      choices: ['None', 'DISPLAY ALL THE OTHER MANAGERS']
+      choices: ["None", ...managers]
     }]
 
   const answers = await inquirer.prompt(questions);
   
 }
 
-db.query(selectNames, (err, results) => {
-  if(err) console.error(err)
-  else console.log(results)
-})
+// db.query(selectNames, (err, results) => {
+//   if(err) console.error(err)
+//   else console.log(results)
+// })
 // getRoles();
-// addEmployee();
+addEmployee();
 
 // init();
-
 
 
 // inquirer.prompt(questions)
