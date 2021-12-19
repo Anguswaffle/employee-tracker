@@ -5,7 +5,7 @@ const config = require('./package.json');
 const mysql = require('mysql2');
 require('console.table');
 // Query strings
-const { selectStr, selectEmployeeId, selectRoleId, selectManagers, newDepartmentQuery, newRoleQuery, newEmployeeQuery, selectDepartmentId, selectEmployeeNames, updateRole } = require('./db/utils')
+const { selectStr, selectEmployeeId, selectRoleId, selectManagers, newDepartmentQuery, newRoleQuery, newEmployeeQuery, selectDepartmentId, selectEmployeeNames, updateRole, updateManager, searchFor, getFullNames } = require('./db/utils')
 
 // asciiart-logo styled splash screen
 console.log(logo(config).render());
@@ -31,29 +31,29 @@ const selectAllFromTable = async (table) => {
   return rows;
 }
 
-// Retrieves a list of managers
-const getManagers = async () => {
-  const [rows] = await promisePool.query(selectManagers)
-  return rows;
-}
+// // Retrieves a list of managers
+// // const getManagers = async () => {
+// //   const [rows] = await promisePool.query(selectManagers)
+// //   return rows;
+// // }
 
-// // Retrieves a given department's ID
-// const getDepartmentId = async (department) => {
-//   const [rows] = await promisePool.query(selectDepartmentId, department)
-//   return rows.map(row => row.id)
+// // // Retrieves a given department's ID
+// // const getDepartmentId = async (department) => {
+// //   const [rows] = await promisePool.query(selectDepartmentId, department)
+// //   return rows.map(row => row.id)
+// // }
+
+// // // Retrieves the role title's ID
+// // const getRoleId = async (roleTitle) => {
+// //   const [rows] = await promisePool.query(selectRoleId, roleTitle)
+// //   return rows.map(row => row.id);
+// // }
+
+// // Retrieves an array of concated employee names
+// const getEmployeeNames = async () => {
+//   const [rows] = await promisePool.query(selectEmployeeNames)
+//   return rows.map(row => row.name);
 // }
-
-// // Retrieves the role title's ID
-// const getRoleId = async (roleTitle) => {
-//   const [rows] = await promisePool.query(selectRoleId, roleTitle)
-//   return rows.map(row => row.id);
-// }
-
-// Retrieves an array of concated employee names
-const getEmployeeNames = async () => {
-  const [rows] = await promisePool.query(selectEmployeeNames)
-  return rows.map(row => row.name);
-}
 
 // // Retrieves a given employee's ID
 // const getEmployeeId = async (name) => {
@@ -70,13 +70,16 @@ const printAllTable = async (choice) => {
   init();
 }
 
+// Update functions
+
 // Updates an employee's info
-const updateEmployee = async () => {
-  const employeeNames = await getEmployeeNames();
-  // Retrieves rows from specified tables
+const changeEmployeeRole = async () => {
+  const employeeTable = await selectAllFromTable('employee');
   const roleTable = await selectAllFromTable('role');
-  // Maps rows to get specified columns
+  // Maps rows to get role titles
   const roleTitles = roleTable.map(row => row.title)
+  // Maps rows to get full employee names
+  const employeeNames = getFullNames(employeeTable)
   const questions = [
     {
       type: 'list',
@@ -92,11 +95,42 @@ const updateEmployee = async () => {
     }
   ]
   const { employee, newRole } = await inquirer.prompt(questions)
-
-  const [ { id } ] = roleTable.filter(roleObj => roleObj.title === newRole)
-  
-  await promisePool.query(updateRole, [id, employee])
+  // Deconstructs role id from role table
+  const roleId = searchFor(roleTable, 'title', newRole, 'id')
+  // Query that updates employee info
+  await promisePool.query(updateRole, [roleId, employee])
   console.log(`${employee} was updated.`);
+  init();
+}
+
+// Updates an emploee's manager
+const changeManager = async () => {
+  const employeeTable = await selectAllFromTable('employee');
+  const employeeNames = getFullNames(employeeTable)
+
+  const questions = [
+    {
+      type: 'list',
+      name: 'employee',
+      message: `Which employee's manager do you want to change?`,
+      choices: employeeNames
+    },
+    {
+      type: 'list',
+      name: 'managerName',
+      message: `Who will be the employee's new manager?`,
+      // Filters out the chosen employee's name
+      choices: (answers) => ['None', ...employeeNames.filter(name => name !== answers.employee)]
+    }
+  ]
+  const { employee, managerName } = await inquirer.prompt(questions);
+  // Determines manager's ID, returns null if no new manager
+  if (managerName === 'None') managerId = { id: null }
+  else[manager] = employeeTable.filter(obj => `${obj.first_name} ${obj.last_name}` === managerName)
+  const managerId = manager.id;
+  // Update query
+  await promisePool.query(updateManager, [managerId, employee])
+  console.log(`${employee}'s manager was changed.`)
   init();
 }
 
@@ -104,7 +138,7 @@ const updateEmployee = async () => {
 
 // Adds a new department to the database
 const addDepartment = async () => {
-  const question =   {
+  const question = {
     type: 'input',
     name: 'newDepartment',
     message: 'What is the name of the department?',
@@ -204,16 +238,15 @@ const addEmployee = async () => {
 
   // Awaits answers to questions
   const { firstName, lastName, newEmployeeRole, managerName } = await inquirer.prompt(questions);
-  
+
   // Retrieves the role ID and manager ID
-  const [role] = roleTable.filter( obj => obj.title === newEmployeeRole)
-  const roleId = role.id;
-  if(managerName === 'None') managerId = {id: null}
-  else {
-  const [manager] = potentialManagers.filter(obj => `${obj.first_name} ${obj.last_name}` === managerName) || null
+  // const [role] = roleTable.filter( obj => obj.title === newEmployeeRole)
+  const roleId = searchFor(roleTable, 'title', newEmployeeRole);
+  // Determines the chosen manager's ID
+  if (managerName === 'None') managerId = { id: null }
+  else[manager] = potentialManagers.filter(obj => `${obj.first_name} ${obj.last_name}` === managerName)
   const managerId = manager.id;
-  }
-  
+
   // Insert query for new employee
   await promisePool.query(newEmployeeQuery, [firstName, lastName, roleId, managerId])
   console.log(`${firstName} ${lastName} was added.`)
@@ -222,22 +255,24 @@ const addEmployee = async () => {
 
 // Takes in a task and switches to the appropriate function
 const caseSwitch = async (choice) => {
-  switch(choice) {
+  switch (choice) {
     // All three of these choices function the same way. Each returns all data from a specified table
     case 'View all employees':
     case 'View all roles':
     case 'View all departments': printAllTable(choice);
       break;
-    case 'Add employee': await addEmployee();
-    break;
-    case 'Update employee role': await updateEmployee();
-    break;
-    case 'Add role': await addRole();
-    break;
-    case 'Add department': await addDepartment();
-    break;
-    case 'Quit': console.log('Thanks for being you!') 
-    process.exit();
+    case 'Add employee': addEmployee();
+      break;
+    case 'Update employee role': changeEmployeeRole();
+      break;
+    case `Change an employee's manager`: changeManager();
+      break;
+    case 'Add role': addRole();
+      break;
+    case 'Add department': addDepartment();
+      break;
+    case 'Quit': console.log('Thanks for being you!')
+      process.exit();
   }
 }
 
@@ -247,7 +282,7 @@ const init = async () => {
     type: 'list',
     name: 'root',
     message: 'What would you like to do?',
-    choices: ['View all employees', 'Add employee', 'Update employee role', 'View all roles', 'Add role', 'View all departments', 'Add department', 'Quit']
+    choices: ['View all employees', 'Add employee', 'Update employee role', `Change an employee's manager`, 'View all roles', 'Add role', 'View all departments', 'Add department', 'Quit']
   }
   const { root } = await inquirer.prompt(question);
   // Takes the answer and performs the appropriate function
