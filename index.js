@@ -5,10 +5,7 @@ const config = require('./package.json');
 const mysql = require('mysql2');
 require('console.table');
 // Query strings
-const { selectStr, selectEmployeeId, selectRoleId, selectManagers, newDepartmentQuery, newRoleQuery, newEmployeeQuery, selectDepartmentId, selectEmployeeNames, updateRole, updateManager, searchFor, getFullNames, determineId } = require('./db/utils')
-
-// asciiart-logo styled splash screen
-console.log(logo(config).render());
+const { selectStr, selectEmployeeId, selectRoleId, selectManagers, newDepartmentQuery, newRoleQuery, newEmployeeQuery, selectDepartmentId, selectEmployeeNames, updateRole, updateManager, searchFor, getFullNames, determineId, selectEmployeeDepartment } = require('./db/utils')
 
 // Creating connection with database
 const db = mysql.createConnection(
@@ -62,11 +59,19 @@ const selectAllFromTable = async (table) => {
 //   return rows.map(row => row.id)
 // }
 
+// Display functions
+
 // Retrieves and prints all data from a given table
 const printAllTable = async (choice) => {
   const table = choice.split(' ')[2].slice(0, -1);
   const data = await selectAllFromTable(table);
   console.table(`${table.toUpperCase()}S`, data);
+  init();
+}
+
+const printEmployeeDeptartment = async () => {
+  const [rows] = await promisePool.query(selectEmployeeDepartment)
+  console.table(rows)
   init();
 }
 
@@ -196,10 +201,10 @@ const addRole = async () => {
 const addEmployee = async () => {
   // Retrieves rows from specified tables
   const roleTable = await selectAllFromTable('role');
-  const potentialManagers = await selectAllFromTable('employee');
+  const employeeTable = await selectAllFromTable('employee');
   // Maps rows to get specified columns
   const roleTitles = roleTable.map(row => row.title);
-  const managerNames = potentialManagers.map(obj => `${obj.first_name} ${obj.last_name}`);
+  const managerNames = getFullNames(employeeTable);
   // Inquirer questions
   const questions = [
     {
@@ -232,17 +237,12 @@ const addEmployee = async () => {
       message: `Who is the employee's manager?`,
       choices: ["None", ...managerNames]
     }]
-
   // Awaits answers to questions
   const { firstName, lastName, newEmployeeRole, managerName } = await inquirer.prompt(questions);
-
   // Determines the role ID
   const roleId = searchFor(roleTable, 'title', newEmployeeRole);
   // Determines the chosen manager's ID
-  if (managerName === 'None') managerId = { id: null }
-  else[manager] = potentialManagers.filter(obj => `${obj.first_name} ${obj.last_name}` === managerName)
-  const managerId = manager.id;
-
+  const managerId = determineId(employeeTable, managerName)
   // Insert query for new employee
   await promisePool.query(newEmployeeQuery, [firstName, lastName, roleId, managerId])
   console.log(`${firstName} ${lastName} was added.`)
@@ -256,6 +256,8 @@ const caseSwitch = async (choice) => {
     case 'View all employees':
     case 'View all roles':
     case 'View all departments': printAllTable(choice);
+      break;
+    case 'View all employees by department': printEmployeeDeptartment();
       break;
     case 'Add employee': addEmployee();
       break;
@@ -278,11 +280,14 @@ const init = async () => {
     type: 'list',
     name: 'root',
     message: 'What would you like to do?',
-    choices: ['View all employees', 'Add employee', 'Update employee role', `Change an employee's manager`, 'View all roles', 'Add role', 'View all departments', 'Add department', 'Quit']
+    choices: ['View all employees', 'View all employees by department', 'Add employee', 'Update employee role', `Change an employee's manager`, 'View all roles', 'Add role', 'View all departments', 'Add department', 'Quit']
   }
   const { root } = await inquirer.prompt(question);
   // Takes the answer and performs the appropriate function
   caseSwitch(root);
 }
+
+// asciiart-logo styled splash screen
+console.log(logo(config).render());
 
 init();

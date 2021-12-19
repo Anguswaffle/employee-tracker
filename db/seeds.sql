@@ -10,13 +10,13 @@ VALUES ("Lead Engineer", 50000.99, 1),
        ("Window Washer", 10, 2),
        ("Sales Lead", 100000.99, 3),
        ("Salesperson", 100000.99, 3);
-       
-
 
 INSERT INTO employee (first_name, last_name, role_id, manager_id)
-VALUES ('Alex', 'Trebek', 1, 1),
+VALUES ('Alex', 'Trebek', 1, NULL),
        ('Sean', 'Connery', 2, NULL),
        ('Professor', 'Utonium', 3, NULL),
        ('Blossom', 'Utonium', 4, 3),
        ('Bubbles', 'Utonium', 4, 3),
-       ('Buttercup', 'Utonium', 4, 3);
+       ('Buttercup', 'Utonium', 4, 3),
+       ('Thor', 'Odinson', 5, NULL),
+       ('Loki', 'Odinson', 6, 7);
