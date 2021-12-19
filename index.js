@@ -5,7 +5,7 @@ const config = require('./package.json');
 const mysql = require('mysql2');
 require('console.table');
 // Query strings
-const { selectStr,selectEmployeeId, selectRoleId,selectManagers, newDepartmentQuery, newRoleQuery, newEmployeeQuery, selectDepartmentId } = require('./db/utils')
+const { selectStr, selectEmployeeId, selectRoleId, selectManagers, newDepartmentQuery, newRoleQuery, newEmployeeQuery, selectDepartmentId, selectEmployeeNames } = require('./db/utils')
 
 // asciiart-logo styled splash screen
 console.log(logo(config).render());
@@ -20,28 +20,8 @@ const db = mysql.createConnection(
   },
   console.log(`Connected to the kemployees_db database.`)
 );
-// Making promise pool
+// Makes promise pool
 const promisePool = db.promise();
-
-// Prompts array
-const questions = [
-
-  {
-    type: 'list',
-    name: 'employee',
-    message: `Which employee's role do you want to update?`,
-    when: (answers) => answers.root === 'Update employee role',
-    choices: ['DISPLAY ALL EMPLOYEES HERE']
-  },
-  {
-    type: 'list',
-    name: 'role',
-    message: `Which role do you want to assign the selected emloyee?`,
-    when: (answers) => answers.root === 'Update employee role',
-    choices: ['DISPLAY ALL ROLES EXCEPT THE EMPLOYEE\'S CURRENT ROLE']
-  },
-  
-]
 
 // Retrieval functions
 
@@ -66,7 +46,13 @@ const getDepartmentId = async (department) => {
 // Retrieves the role title's ID
 const getRoleId = async (roleTitle) => {
   const [rows] = await promisePool.query(selectRoleId, roleTitle)
-  return rows.map(row => row.id)
+  return rows.map(row => row.id);
+}
+
+// Retrieves an array of concated employee names
+const getEmployeeNames = async () => {
+  const [rows] = await promisePool.query(selectEmployeeNames)
+  return rows.map(row => row.name);
 }
 
 // Retrieves a given employee's ID
@@ -81,6 +67,48 @@ const printAllTable = async (choice) => {
   const table = choice.split(' ')[2].slice(0, -1);
   const data = await selectAllFromTable(table);
   console.table(`${table}s`, data);
+}
+
+// Updates an employee's info
+const updateEmployee = async () => {
+  const employeeNames = await getEmployeeNames();
+  // Retrieves rows from specified tables
+  const roleTable = await selectAllFromTable('role');
+  const managers = await getManagers();
+
+  // Maps rows to get specified columns
+  const roleTitles = roleTable.map(row => row.title)
+  const managerNames = managers.map(manager => manager.name)
+
+  const questions = [
+    {
+      type: 'list',
+      name: 'employee',
+      message: `Which employee's role do you want to update?`,
+      choices: employeeNames
+    },
+    {
+      type: 'list',
+      name: 'role',
+      message: `Which role do you want to assign the selected emloyee?`,
+      choices: roleTitles
+    },
+    {
+      type: 'confirm',
+      name: 'wantsNewManager',
+      message: 'Do you want to reassign employee to a new manager?'
+    },
+    {
+      type: 'list',
+      name: 'newManager',
+      message: 'Which manager would you like to assign employee to?', 
+      choices: ["None", ...managerNames],
+      when: (answers) => answers.wantsNewManager === true
+    }
+  ]
+  const { employee, role, newManager } = await inquirer.prompt(questions)
+
+  
 }
 
 // Insert functions
@@ -144,7 +172,7 @@ const addRole = async () => {
 
 // Adds a new employee to the database
 const addEmployee = async () => {
-  // Gets rows from specified tables
+  // Retrieves rows from specified tables
   const roleTable = await selectAllFromTable('role');
   const managers = await getManagers();
 
