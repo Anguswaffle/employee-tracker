@@ -5,7 +5,7 @@ const config = require('./package.json');
 const mysql = require('mysql2');
 require('console.table');
 // Query strings
-const { selectStr, selectEmployeeId, selectRoleId, selectManagers, newDepartmentQuery, newRoleQuery, newEmployeeQuery, selectDepartmentId, selectEmployeeNames, updateRole, updateManager, searchFor, getFullNames, determineId, selectEmployeeDepartment } = require('./db/utils')
+const { selectStr, selectEmployeeId, selectRoleId, selectManagers, newDepartmentQuery, newRoleQuery, newEmployeeQuery, selectDepartmentId, selectEmployeeNames, updateRole, updateManager, deleteFromQuery, deleteEmployeeQuery, searchFor, getFullNames, determineId, selectEmployeeDepartment, selectWildStr } = require('./db/utils')
 
 // Creating connection with database
 const db = mysql.createConnection(
@@ -249,15 +249,61 @@ const addEmployee = async () => {
   init();
 }
 
+// Delete functions
+
+const removeFrom = async (choice) => {
+  // Determines which table to delete from
+  const table = choice.split(' ')[1];
+  const tableInfo = await selectAllFromTable(table);
+  // Determines if table is department or role then sets row name const
+  if (table === 'department') rowName = 'name'
+  else if (table === 'role') rowName = 'title'
+
+  const nameList = tableInfo.map(row => row[rowName])
+  const question = {
+    type: 'list',
+    name: 'toRemove',
+    message: `Which ${table} would you like to remove?`,
+    choices: nameList
+  }
+  const { toRemove } = await inquirer.prompt(question);
+  // Deletes selected item from table
+  await promisePool.query(deleteFromQuery, [table, rowName, toRemove])
+  console.log(`${toRemove} was removed.`)
+  init();
+}
+
+const removeEmployee = async () => {
+  // Retrieves an array of employee names 
+  const employeeTable = await selectAllFromTable('employee');
+  const employeeNames = getFullNames(employeeTable);
+  const question = {
+    type: 'list',
+    name: 'employee',
+    message: 'Which employee would you like to remove?',
+    choices: employeeNames
+  }
+  const { employee } = await inquirer.prompt(question);
+  await promisePool.query(deleteEmployeeQuery, employee);
+  console.log(`${employee} was removed.`)
+  init();
+}
+
 // Takes in a task and switches to the appropriate function
 const caseSwitch = async (choice) => {
   switch (choice) {
     // All three of these choices function the same way. Each returns all data from a specified table
-    case 'View all employees':
+    case 'View all departments':
     case 'View all roles':
-    case 'View all departments': printAllTable(choice);
+    case 'View all employees': printAllTable(choice);
       break;
-    case 'View all employees by department': printEmployeeDeptartment();
+    case 'Remove department':
+    case 'Remove role': removeFrom(choice);
+      break;
+    case 'Remove employee': removeEmployee();
+      break;
+    case 'View all employees by department':
+      printEmployeeDeptartment();
       break;
     case 'Add employee': addEmployee();
       break;
@@ -280,7 +326,7 @@ const init = async () => {
     type: 'list',
     name: 'root',
     message: 'What would you like to do?',
-    choices: ['View all employees', 'View all employees by department', 'Add employee', 'Update employee role', `Change an employee's manager`, 'View all roles', 'Add role', 'View all departments', 'Add department', 'Quit']
+    choices: ['View all employees', 'View all employees by department', 'Add employee', 'Remove employee', 'Update employee role', `Change an employee's manager`, 'View all roles', 'Add role', 'Remove role', 'View all departments', 'Add department', 'Remove department', 'Quit']
   }
   const { root } = await inquirer.prompt(question);
   // Takes the answer and performs the appropriate function
@@ -289,5 +335,4 @@ const init = async () => {
 
 // asciiart-logo styled splash screen
 console.log(logo(config).render());
-
 init();
