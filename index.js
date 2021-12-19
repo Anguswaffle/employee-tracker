@@ -5,7 +5,7 @@ const config = require('./package.json');
 const mysql = require('mysql2');
 require('console.table');
 // Query strings
-const { selectStr, selectEmployeeId, selectRoleId, selectManagers, newDepartmentQuery, newRoleQuery, newEmployeeQuery, selectDepartmentId, selectEmployeeNames } = require('./db/utils')
+const { selectStr, selectEmployeeId, selectRoleId, selectManagers, newDepartmentQuery, newRoleQuery, newEmployeeQuery, selectDepartmentId, selectEmployeeNames, updateRole } = require('./db/utils')
 
 // asciiart-logo styled splash screen
 console.log(logo(config).render());
@@ -74,12 +74,8 @@ const updateEmployee = async () => {
   const employeeNames = await getEmployeeNames();
   // Retrieves rows from specified tables
   const roleTable = await selectAllFromTable('role');
-  const managers = await getManagers();
-
   // Maps rows to get specified columns
   const roleTitles = roleTable.map(row => row.title)
-  const managerNames = managers.map(manager => manager.name)
-
   const questions = [
     {
       type: 'list',
@@ -89,26 +85,17 @@ const updateEmployee = async () => {
     },
     {
       type: 'list',
-      name: 'role',
+      name: 'newRole',
       message: `Which role do you want to assign the selected emloyee?`,
       choices: roleTitles
-    },
-    {
-      type: 'confirm',
-      name: 'wantsNewManager',
-      message: 'Do you want to reassign employee to a new manager?'
-    },
-    {
-      type: 'list',
-      name: 'newManager',
-      message: 'Which manager would you like to assign employee to?', 
-      choices: ["None", ...managerNames],
-      when: (answers) => answers.wantsNewManager === true
     }
   ]
-  const { employee, role, newManager } = await inquirer.prompt(questions)
+  const { employee, newRole } = await inquirer.prompt(questions)
 
+  const [ {id} ] = roleTable.filter(roleObj => roleObj.title === newRole)
   
+  await promisePool.query(updateRole, [id, employee])
+  console.log(`${employee} was updated.`);
 }
 
 // Insert functions
@@ -125,15 +112,15 @@ const addDepartment = async () => {
     }
   }
   // Deconstructs answer
-  const { newDepartment } = await inquirer.prompt(question)
+  const { newDepartment } = await inquirer.prompt(question);
   // Insert query for new department
-  await promisePool.query(newDepartmentQuery, newDepartment)
-  console.log(`${newDepartment} was added.`)
+  await promisePool.query(newDepartmentQuery, newDepartment);
+  console.log(`${newDepartment} was added.`);
 }
 
 // Adds a new role to the database
 const addRole = async () => {
-  const departmentArr = await selectAllFromTable('department')
+  const departmentArr = await selectAllFromTable('department');
   const departments = departmentArr.map(department => department.name);
   console.log(departments)
   const questions = [{
@@ -164,10 +151,11 @@ const addRole = async () => {
   // Deconstructs answers
   const { newRole, salary, department } = await inquirer.prompt(questions);
   // Retrieving specified department ID
-  const departmentId = await getDepartmentId(department);
+  const [chosenDepartment] = departmentsArr.filter(departmentObj => departmentObj.name === department)
+  const departmentId = chosenDepartment.id;
   // Insert query for new role
-  await promisePool.query(newRoleQuery, [newRole, salary, departmentId])
-  console.log(`${newRole} was added.`)
+  await promisePool.query(newRoleQuery, [newRole, salary, departmentId]);
+  console.log(`${newRole} was added.`);
 }
 
 // Adds a new employee to the database
@@ -175,10 +163,9 @@ const addEmployee = async () => {
   // Retrieves rows from specified tables
   const roleTable = await selectAllFromTable('role');
   const managers = await getManagers();
-
   // Maps rows to get specified columns
-  const roleTitles = roleTable.map(row => row.title)
-  const managerNames = managers.map(manager => manager.name)
+  const roleTitles = roleTable.map(row => row.title);
+  const managerNames = managers.map(manager => manager.name);
   // Inquirer questions
   const questions = [
     {
@@ -216,8 +203,10 @@ const addEmployee = async () => {
   const { firstName, lastName, newEmployeeRole, managerName } = await inquirer.prompt(questions);
   
   // Retrieves the role ID and manager ID
-  const roleId = await getRoleId(newEmployeeRole)
-  const managerId = await getEmployeeId(managerName);
+  const [role] = roleTable.filter( roleObj => roleObj.title === newEmployeeRole)
+  const roleId = role.id;
+  const [manager] = managers.filter(managerObj => `${managerObj.first_name} ${managerObj.last_name}` === managerName)
+  const managerId = manager.id;
   
   // Insert query for new employee
   await promisePool.query(newEmployeeQuery, [firstName, lastName, roleId, managerId])
