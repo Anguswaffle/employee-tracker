@@ -16,13 +16,20 @@ const newRoleQuery = `INSERT INTO role (title, salary, department_id) VALUES (?,
 const newEmployeeQuery = `INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?)`
 
 // Helper functions
-
+// Searches for a particular value from a table
 const searchFor = (arr, compareKey, term, desiredKey) => {
   const [ newArr ] = arr.filter(element => element[compareKey] === term)
   return newArr[desiredKey];
 }
+// Determines the given employee's ID
+const determineId = (employeeTable, employeeName) => {
+  if(employeeName === 'None') return null;
+  const [employeeRow] = employeeTable.filter(employee => `${employee.first_name} ${employee.last_name}` === employeeName)
+  return employeeRow.id;
+}
+// Concats first and last names
 const getFullNames = (arr) => {
   return arr.map(row => `${row.first_name} ${row.last_name}`);
 }
 
-module.exports = { selectStr, selectDepartmentId, selectRoleId, selectEmployeeNames, selectEmployeeId, selectManagers, updateRole, updateManager, newDepartmentQuery, newRoleQuery, newEmployeeQuery, searchFor, getFullNames }
+module.exports = { selectStr, selectDepartmentId, selectRoleId, selectEmployeeNames, selectEmployeeId, selectManagers, updateRole, updateManager, newDepartmentQuery, newRoleQuery, newEmployeeQuery, searchFor, determineId, getFullNames }

@@ -5,7 +5,7 @@ const config = require('./package.json');
 const mysql = require('mysql2');
 require('console.table');
 // Query strings
-const { selectStr, selectEmployeeId, selectRoleId, selectManagers, newDepartmentQuery, newRoleQuery, newEmployeeQuery, selectDepartmentId, selectEmployeeNames, updateRole, updateManager, searchFor, getFullNames } = require('./db/utils')
+const { selectStr, selectEmployeeId, selectRoleId, selectManagers, newDepartmentQuery, newRoleQuery, newEmployeeQuery, selectDepartmentId, selectEmployeeNames, updateRole, updateManager, searchFor, getFullNames, determineId } = require('./db/utils')
 
 // asciiart-logo styled splash screen
 console.log(logo(config).render());
@@ -107,7 +107,6 @@ const changeEmployeeRole = async () => {
 const changeManager = async () => {
   const employeeTable = await selectAllFromTable('employee');
   const employeeNames = getFullNames(employeeTable)
-
   const questions = [
     {
       type: 'list',
@@ -125,9 +124,7 @@ const changeManager = async () => {
   ]
   const { employee, managerName } = await inquirer.prompt(questions);
   // Determines manager's ID, returns null if no new manager
-  if (managerName === 'None') managerId = { id: null }
-  else[manager] = employeeTable.filter(obj => `${obj.first_name} ${obj.last_name}` === managerName)
-  const managerId = manager.id;
+  const managerId = determineId(employeeTable, managerName)
   // Update query
   await promisePool.query(updateManager, [managerId, employee])
   console.log(`${employee}'s manager was changed.`)
@@ -239,8 +236,7 @@ const addEmployee = async () => {
   // Awaits answers to questions
   const { firstName, lastName, newEmployeeRole, managerName } = await inquirer.prompt(questions);
 
-  // Retrieves the role ID and manager ID
-  // const [role] = roleTable.filter( obj => obj.title === newEmployeeRole)
+  // Determines the role ID
   const roleId = searchFor(roleTable, 'title', newEmployeeRole);
   // Determines the chosen manager's ID
   if (managerName === 'None') managerId = { id: null }
