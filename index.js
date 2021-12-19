@@ -1,9 +1,16 @@
+// Importing dependencies
 const logo = require('asciiart-logo');
 const inquirer = require('inquirer');
 const config = require('./package.json');
 const mysql = require('mysql2');
-const { selectStr, selectNames, selectManagers } = require('./db/utils')
+require('console.table');
+// Query strings
+const { selectStr,selectEmployeeId, selectRoleId,selectManagers, newDepartmentQuery, newRoleQuery, newEmployeeQuery, selectDepartmentId } = require('./db/utils')
 
+// asciiart-logo styled splash screen
+console.log(logo(config).render());
+
+// Creating connection with database
 const db = mysql.createConnection(
   {
     host: 'localhost',
@@ -13,11 +20,8 @@ const db = mysql.createConnection(
   },
   console.log(`Connected to the kemployees_db database.`)
 );
-
+// Making promise pool
 const promisePool = db.promise();
-
-// asciiart-logo styled splash screen
-console.log(logo(config).render());
 
 // Prompts array
 const questions = [
@@ -36,11 +40,78 @@ const questions = [
     when: (answers) => answers.root === 'Update employee role',
     choices: ['DISPLAY ALL ROLES EXCEPT THE EMPLOYEE\'S CURRENT ROLE']
   },
-  {
+  
+]
+
+// Retrieval functions
+
+// Selects all from a given table
+const selectAllFromTable = async (table) => {
+  const [rows] = await promisePool.query(selectStr, table);
+  return rows;
+}
+
+// Retrieves a list of managers
+const getManagers = async () => {
+  const [rows] = await promisePool.query(selectManagers)
+  return rows;
+}
+
+// Retrieves a given department's ID
+const getDepartmentId = async (department) => {
+  const [rows] = await promisePool.query(selectDepartmentId, department)
+  return rows.map(row => row.id)
+}
+
+// Retrieves the role title's ID
+const getRoleId = async (roleTitle) => {
+  const [rows] = await promisePool.query(selectRoleId, roleTitle)
+  return rows.map(row => row.id)
+}
+
+// Retrieves a given employee's ID
+const getEmployeeId = async (name) => {
+  if(name === 'None') return null;
+  const [rows] = await promisePool.query(selectEmployeeId, name)
+  return rows.map(row => row.id)
+}
+
+// Retrieves and prints all data from a given table
+const printAllTable = async (choice) => {
+  const table = choice.split(' ')[2].slice(0, -1);
+  const data = await selectAllFromTable(table);
+  console.table(`${table}s`, data);
+}
+
+// Insert functions
+
+// Adds a new department to the database
+const addDepartment = async () => {
+  const question =   {
+    type: 'input',
+    name: 'newDepartment',
+    message: 'What is the name of the department?',
+    validate: newDepartment => {
+      if (newDepartment.length > 0 && newDepartment.length <= 30) return true;
+      return `Department name must be between 1 and 30 characters.`
+    }
+  }
+  // Deconstructs answer
+  const { newDepartment } = await inquirer.prompt(question)
+  // Insert query for new department
+  await promisePool.query(newDepartmentQuery, newDepartment)
+  console.log(`${newDepartment} was added.`)
+}
+
+// Adds a new role to the database
+const addRole = async () => {
+  const departmentArr = await selectAllFromTable('department')
+  const departments = departmentArr.map(department => department.name);
+  console.log(departments)
+  const questions = [{
     type: 'input',
     name: 'newRole',
     message: `What is the name of the role?`,
-    when: (answers) => answers.root === 'Add role',
     validate: newRole => {
       if (newRole.length > 0 && newRole.length <= 30) return true;
       return `Role name must be between 1 and 30 characters.`
@@ -50,7 +121,6 @@ const questions = [
     type: 'input',
     name: 'salary',
     message: 'What is the salary of the role?',
-    when: (answers) => answers.root === 'Add role',
     validate: salary => {
       if (isNaN(salary)) return `Salary must be a number only.`
       else if (salary === '') return `Please enter a salary.`
@@ -59,80 +129,29 @@ const questions = [
   },
   {
     type: 'list',
-    name: 'departmentRole',
+    name: 'department',
     message: 'What department does the role belong to?',
-    when: (answers) => answers.root === 'Add role',
-    choices: ['DISPLAY ALL DEPARTMENTS']
-  },
-  {
-    type: 'input',
-    name: 'newDepartment',
-    message: 'What is the name of the department?',
-    when: (answers) => answers.root === 'Add department',
-    validate: newDepartment => {
-      if (newDepartment.length > 0 && newDepartment.length <= 30) return true;
-      return `Department name must be between 1 and 30 characters.`
-    }
-  }
-]
-
-// Initiates employee tracker program
-const init = async () => {
-  const question = {
-    type: 'list',
-    name: 'root',
-    message: 'What would you like to do?',
-    choices: ['View all employees', 'Add employee', 'Update employee role', 'View all roles', 'Add role', 'View all departments', 'Add department', 'Quit']
-  }
-  const { root } = await inquirer.prompt(question);
-  const again = root !== 'Quit';
-
-  caseSwitch(root)
-
-  return again ? init() : console.log('Thanks for tracking your employees!')
+    choices: departments
+  }]
+  // Deconstructs answers
+  const { newRole, salary, department } = await inquirer.prompt(questions);
+  // Retrieving specified department ID
+  const departmentId = await getDepartmentId(department);
+  // Insert query for new role
+  await promisePool.query(newRoleQuery, [newRole, salary, departmentId])
+  console.log(`${newRole} was added.`)
 }
 
-// const getRoles = () => {
-//   db.query(selectStr, 'role', (err, results) => {
-//     if (err) console.error(err);
-//     else {
-//       addEmployee(results.map(result => result.title))
-//     }
-//   })
-// }
-
-const getRoleTitles = async () => {
-  // const promisePool = db.promise();
-  const [rows, fields] = await promisePool.query(selectStr, 'role');
-  return rows.map(row => row.title);
-}
-
-const getManagers = async () => {
-  const [rows, fields] = await promisePool.query(selectManagers)
-  return rows.map(row => row.first_name);
-}
-
-// router.get('/', async (req, res) => {
-//   // Store the bookData in a variable once the promise is resolved.
-//   const bookData = await Book.findAll();
-
-//   // Return the bookData promise inside of the JSON response
-//   return res.json(bookData);
-// });
-
-
-/**
- * I want a query that brings back
- * role titles
- * role title IDs
- * 
- * all employees that have the title Manager
- */
-
+// Adds a new employee to the database
 const addEmployee = async () => {
-  // const roles = data.map(role => role.title)
-  const roles = await getRoleTitles();
+  // Gets rows from specified tables
+  const roleTable = await selectAllFromTable('role');
   const managers = await getManagers();
+
+  // Maps rows to get specified columns
+  const roleTitles = roleTable.map(row => row.title)
+  const managerNames = managers.map(manager => manager.name)
+  // Inquirer questions
   const questions = [
     {
       type: 'input',
@@ -156,82 +175,67 @@ const addEmployee = async () => {
       type: 'list',
       name: 'newEmployeeRole',
       message: `What is the employee's role?`,
-      choices: roles
+      choices: roleTitles
     },
     {
       type: 'list',
       name: 'managerName',
       message: `Who is the employee's manager?`,
-      choices: ["None", ...managers]
+      choices: ["None", ...managerNames]
     }]
 
-  const answers = await inquirer.prompt(questions);
+  // Awaits answers to questions
+  const { firstName, lastName, newEmployeeRole, managerName } = await inquirer.prompt(questions);
   
+  // Retrieves the role ID and manager ID
+  const roleId = await getRoleId(newEmployeeRole)
+  const managerId = await getEmployeeId(managerName);
+  
+  // Insert query for new employee
+  await promisePool.query(newEmployeeQuery, [firstName, lastName, roleId, managerId])
+  console.log(`${firstName} ${lastName} was added.`)
 }
 
-// db.query(selectNames, (err, results) => {
-//   if(err) console.error(err)
-//   else console.log(results)
-// })
-// getRoles();
-addEmployee();
+// Takes in a task and switches to the appropriate function
+const caseSwitch = async (choice) => {
+  switch(choice) {
+    // All three of these function the same way. Each returns all data from a specified table
+    case 'View all employees':
+    case 'View all roles':
+    case 'View all departments': printAllTable(choice);
+      break;
+    case 'Add employee': await addEmployee();
+    break;
+    case 'Update employee role': await updateEmployee();
+    break;
+    case 'Add role': await addRole();
+    break;
+    case 'Add department': await addDepartment();
+    break;
+    default: return;
+  }
+}
 
-// init();
+// Initiates employee tracker program
+const init = async () => {
+  const question = {
+    type: 'list',
+    name: 'root',
+    message: 'What would you like to do?',
+    choices: ['View all employees', 'Add employee', 'Update employee role', 'View all roles', 'Add role', 'View all departments', 'Add department', 'Quit']
+  }
+  const { root } = await inquirer.prompt(question);
+  const again = root !== 'Quit';
 
+  await caseSwitch(root);
 
-// inquirer.prompt(questions)
+  return again ? init() : process.exit()
+}
 
-// const trackEmployees = async () => {
+init();
 
-//   const answers = await inquirer.prompt(questions);
-//   const again = answers.root !== 'Quit';
-
-//   // const queryThis = rootSwitch(answers)
-
-//   // db.query(queryThis, (err, result) => {
-//   //   if (err) {
-//   //     console.log(err);
-//   //   }
-//   //   console.table(result);
-//   // });
-
-//   // return again ? trackEmployees() : console.log('You fucking rock')
-//   return answers;
-// }
-
-// trackEmployees();
-
-// const init = async () => {
-//   const answers = await trackEmployees();
-//   db.query(answers, (err, result) => {
-//     if (err) {
-//       console.log(err);
-//     }
-//     console.table(result)
-//   })
-// }
-
-// init();
 /**
- * What would you like to do?
-View all employees -> (returns all employees)
-
-Add employee -> What is the employee’s first name? What is the employee’s last name? What is the employee’s role? (display roles) Who is the employee’s manager? (display * from managers where role = ‘Manager’ &&& None) -> return to beginning prompt
+ * 
 
 Update employee role -> Which employee’s role do you want to update? (display * from employee) -> Which role do you want to assign the selected employee (return * from roles except current role) -> return to beginning prompt
-
-View all roles -> (returns all roles)
-
-Add role -> What is the name of the role? -> What is the salary of the role? -> What department does the role belong to? (display departments) -> Back to beginning prompt
-
-View all department -> (display * from departments)
-
-Add department -> What is the name of the department? -> Back to beginning prompt
-
-Quit
- */
-
-
-/**
- *
  */
