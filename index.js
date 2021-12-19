@@ -165,10 +165,10 @@ const addRole = async () => {
 const addEmployee = async () => {
   // Retrieves rows from specified tables
   const roleTable = await selectAllFromTable('role');
-  const managers = await getManagers();
+  const potentialManagers = await selectAllFromTable('employee');
   // Maps rows to get specified columns
   const roleTitles = roleTable.map(row => row.title);
-  const managerNames = managers.map(manager => manager.name);
+  const managerNames = potentialManagers.map(obj => `${obj.first_name} ${obj.last_name}`);
   // Inquirer questions
   const questions = [
     {
@@ -206,10 +206,13 @@ const addEmployee = async () => {
   const { firstName, lastName, newEmployeeRole, managerName } = await inquirer.prompt(questions);
   
   // Retrieves the role ID and manager ID
-  const [role] = roleTable.filter( roleObj => roleObj.title === newEmployeeRole)
+  const [role] = roleTable.filter( obj => obj.title === newEmployeeRole)
   const roleId = role.id;
-  const [manager] = managers.filter(managerObj => `${managerObj.first_name} ${managerObj.last_name}` === managerName)
+  if(managerName === 'None') managerId = {id: null}
+  else {
+  const [manager] = potentialManagers.filter(obj => `${obj.first_name} ${obj.last_name}` === managerName) || null
   const managerId = manager.id;
+  }
   
   // Insert query for new employee
   await promisePool.query(newEmployeeQuery, [firstName, lastName, roleId, managerId])
@@ -220,7 +223,7 @@ const addEmployee = async () => {
 // Takes in a task and switches to the appropriate function
 const caseSwitch = async (choice) => {
   switch(choice) {
-    // All three of these function the same way. Each returns all data from a specified table
+    // All three of these choices function the same way. Each returns all data from a specified table
     case 'View all employees':
     case 'View all roles':
     case 'View all departments': printAllTable(choice);
@@ -233,7 +236,8 @@ const caseSwitch = async (choice) => {
     break;
     case 'Add department': await addDepartment();
     break;
-    default: return;
+    case 'Quit': console.log('Thanks for being you!') 
+    process.exit();
   }
 }
 
@@ -246,11 +250,8 @@ const init = async () => {
     choices: ['View all employees', 'Add employee', 'Update employee role', 'View all roles', 'Add role', 'View all departments', 'Add department', 'Quit']
   }
   const { root } = await inquirer.prompt(question);
-  // const again = (root !== 'Quit') || root.includes('View all');
-
-  await caseSwitch(root);
-
-  // return again ? init() : process.exit();
+  // Takes the answer and performs the appropriate function
+  caseSwitch(root);
 }
 
 init();
