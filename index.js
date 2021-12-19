@@ -37,17 +37,17 @@ const getManagers = async () => {
   return rows;
 }
 
-// Retrieves a given department's ID
-const getDepartmentId = async (department) => {
-  const [rows] = await promisePool.query(selectDepartmentId, department)
-  return rows.map(row => row.id)
-}
+// // Retrieves a given department's ID
+// const getDepartmentId = async (department) => {
+//   const [rows] = await promisePool.query(selectDepartmentId, department)
+//   return rows.map(row => row.id)
+// }
 
-// Retrieves the role title's ID
-const getRoleId = async (roleTitle) => {
-  const [rows] = await promisePool.query(selectRoleId, roleTitle)
-  return rows.map(row => row.id);
-}
+// // Retrieves the role title's ID
+// const getRoleId = async (roleTitle) => {
+//   const [rows] = await promisePool.query(selectRoleId, roleTitle)
+//   return rows.map(row => row.id);
+// }
 
 // Retrieves an array of concated employee names
 const getEmployeeNames = async () => {
@@ -55,18 +55,19 @@ const getEmployeeNames = async () => {
   return rows.map(row => row.name);
 }
 
-// Retrieves a given employee's ID
-const getEmployeeId = async (name) => {
-  if(name === 'None') return null;
-  const [rows] = await promisePool.query(selectEmployeeId, name)
-  return rows.map(row => row.id)
-}
+// // Retrieves a given employee's ID
+// const getEmployeeId = async (name) => {
+//   if(name === 'None') return null;
+//   const [rows] = await promisePool.query(selectEmployeeId, name)
+//   return rows.map(row => row.id)
+// }
 
 // Retrieves and prints all data from a given table
 const printAllTable = async (choice) => {
   const table = choice.split(' ')[2].slice(0, -1);
   const data = await selectAllFromTable(table);
-  console.table(`${table}s`, data);
+  console.table(`${table.toUpperCase()}S`, data);
+  init();
 }
 
 // Updates an employee's info
@@ -92,10 +93,11 @@ const updateEmployee = async () => {
   ]
   const { employee, newRole } = await inquirer.prompt(questions)
 
-  const [ {id} ] = roleTable.filter(roleObj => roleObj.title === newRole)
+  const [ { id } ] = roleTable.filter(roleObj => roleObj.title === newRole)
   
   await promisePool.query(updateRole, [id, employee])
   console.log(`${employee} was updated.`);
+  init();
 }
 
 // Insert functions
@@ -116,13 +118,13 @@ const addDepartment = async () => {
   // Insert query for new department
   await promisePool.query(newDepartmentQuery, newDepartment);
   console.log(`${newDepartment} was added.`);
+  init();
 }
 
 // Adds a new role to the database
 const addRole = async () => {
   const departmentArr = await selectAllFromTable('department');
   const departments = departmentArr.map(department => department.name);
-  console.log(departments)
   const questions = [{
     type: 'input',
     name: 'newRole',
@@ -151,11 +153,12 @@ const addRole = async () => {
   // Deconstructs answers
   const { newRole, salary, department } = await inquirer.prompt(questions);
   // Retrieving specified department ID
-  const [chosenDepartment] = departmentsArr.filter(departmentObj => departmentObj.name === department)
+  const [chosenDepartment] = departmentArr.filter(departmentObj => departmentObj.name === department)
   const departmentId = chosenDepartment.id;
   // Insert query for new role
   await promisePool.query(newRoleQuery, [newRole, salary, departmentId]);
   console.log(`${newRole} was added.`);
+  init();
 }
 
 // Adds a new employee to the database
@@ -211,6 +214,7 @@ const addEmployee = async () => {
   // Insert query for new employee
   await promisePool.query(newEmployeeQuery, [firstName, lastName, roleId, managerId])
   console.log(`${firstName} ${lastName} was added.`)
+  init();
 }
 
 // Takes in a task and switches to the appropriate function
@@ -242,17 +246,11 @@ const init = async () => {
     choices: ['View all employees', 'Add employee', 'Update employee role', 'View all roles', 'Add role', 'View all departments', 'Add department', 'Quit']
   }
   const { root } = await inquirer.prompt(question);
-  const again = root !== 'Quit';
+  // const again = (root !== 'Quit') || root.includes('View all');
 
   await caseSwitch(root);
 
-  return again ? init() : process.exit()
+  // return again ? init() : process.exit();
 }
 
 init();
-
-/**
- * 
-
-Update employee role -> Which employee’s role do you want to update? (display * from employee) -> Which role do you want to assign the selected employee (return * from roles except current role) -> return to beginning prompt
- */
