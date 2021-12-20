@@ -4,12 +4,12 @@ VALUES ("Information Technology"),
        ("Sales");
 
 INSERT INTO role (title, salary, department_id)
-VALUES ("Lead Engineer", 50000.99, 1),
-       ("Software Engineer", 200000.83, 1),
-       ("Head Custodian", 100000.99, 2),
+VALUES ("Lead Engineer", 500.99, 1),
+       ("Software Engineer", 223400.83, 1),
+       ("Head Custodian", 100100.99, 2),
        ("Window Washer", 10, 2),
-       ("Sales Lead", 100000.99, 3),
-       ("Salesperson", 100000.99, 3);
+       ("Sales Lead", 123450.99, 3),
+       ("Salesperson", 1000.99, 3);
 
 INSERT INTO employee (first_name, last_name, role_id, manager_id)
 VALUES ('Alex', 'Trebek', 1, NULL),

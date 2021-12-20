@@ -5,7 +5,7 @@ const config = require('./package.json');
 const mysql = require('mysql2');
 require('console.table');
 // Query strings
-const { selectStr, selectEmployeeId, selectRoleId, selectManagers, newDepartmentQuery, newRoleQuery, newEmployeeQuery, selectDepartmentId, selectEmployeeNames, updateRole, updateManager, deleteFromQuery, deleteEmployeeQuery, searchFor, getFullNames, determineId, selectEmployeeDepartment, selectWildStr } = require('./db/utils')
+const { selectStr, selectEmployeeId, selectRoleId, selectManagers, newDepartmentQuery, newRoleQuery, newEmployeeQuery, selectDepartmentId, selectEmployeeNames, updateRole, updateManager, deleteFromQuery, deleteEmployeeQuery, searchFor, getFullNames, determineId, selectEmployeeDepartment, selectTotalSalary } = require('./db/utils')
 
 // Creating connection with database
 const db = mysql.createConnection(
@@ -69,9 +69,32 @@ const printAllTable = async (choice) => {
   init();
 }
 
-const printEmployeeDeptartment = async () => {
+const printEmployeeDepartment = async () => {
   const [rows] = await promisePool.query(selectEmployeeDepartment)
   console.table(rows)
+  init();
+}
+
+const printBudget = async () => {
+  // Retrieves department table and stores it in an array
+  const departmentArr = await selectAllFromTable('department');
+  // Array of department names
+  const departments = departmentArr.map(department => department.name);
+  const question = {
+    type: 'list',
+    name: 'department',
+    message: `Which department's budget would you like to view?`,
+    choices: departments
+  }
+  const { department } = await inquirer.prompt(question);
+  // Searches for chosen department's ID
+  const id = searchFor(departmentArr, 'name', department, 'id');
+  // All the salaries from chosen department
+  const [rows] = await promisePool.query(selectTotalSalary, id);
+  let totalSalary = 0;
+  // Adds all salaries
+  rows.forEach(row => totalSalary += Number(row.salary))
+  console.log(`$${totalSalary.toLocaleString("en-US")} is the the current combined salaries for everyone in ${department}.`);
   init();
 }
 
@@ -302,8 +325,7 @@ const caseSwitch = async (choice) => {
       break;
     case 'Remove employee': removeEmployee();
       break;
-    case 'View all employees by department':
-      printEmployeeDeptartment();
+    case 'View all employees by department': printEmployeeDepartment();
       break;
     case 'Add employee': addEmployee();
       break;
@@ -315,6 +337,8 @@ const caseSwitch = async (choice) => {
       break;
     case 'Add department': addDepartment();
       break;
+    case 'View department budget': printBudget();
+      break; 
     case 'Quit': console.log('Thanks for being you!')
       process.exit();
   }
@@ -326,7 +350,7 @@ const init = async () => {
     type: 'list',
     name: 'root',
     message: 'What would you like to do?',
-    choices: ['View all employees', 'View all employees by department', 'Add employee', 'Remove employee', 'Update employee role', `Change an employee's manager`, 'View all roles', 'Add role', 'Remove role', 'View all departments', 'Add department', 'Remove department', 'Quit']
+    choices: ['View all employees', 'View all employees by department', 'Add employee', 'Remove employee', 'Update employee role', `Change an employee's manager`, 'View all roles', 'Add role', 'Remove role', 'View all departments', 'Add department', 'Remove department', 'View department budget', 'Quit']
   }
   const { root } = await inquirer.prompt(question);
   // Takes the answer and performs the appropriate function

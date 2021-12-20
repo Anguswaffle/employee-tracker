@@ -1,12 +1,12 @@
 // Strings for querying information
 const selectStr = `SELECT * FROM ??`
-const selectWildStr = `SELECT ?? FROM ??`
 const selectDepartmentId = `SELECT id FROM department WHERE name=?`
 const selectRoleId = `SELECT id FROM role WHERE title = ?`
 const selectEmployeeNames = `SELECT CONCAT(first_name, ' ', last_name) AS name FROM employee`
 const selectEmployeeId = `SELECT id FROM employee WHERE CONCAT(first_name, ' ', last_name) = ?`
 const selectManagers = `SELECT *, CONCAT(first_name, ' ', last_name) AS name FROM employee JOIN role ON employee.role_id = role.id WHERE role.title = 'Manager'`
 const selectEmployeeDepartment = `SELECT CONCAT(first_name, ' ', last_name) AS full_name, name as department_name FROM employee LEFT JOIN role ON employee.role_id = role.id JOIN department ON role.department_id = department.id ORDER BY department_id`
+const selectTotalSalary = `SELECT salary FROM role JOIN employee ON employee.role_id = role.id WHERE department_id = ?`
 
 // Update strings
 const updateRole = `UPDATE employee SET role_id = ? WHERE CONCAT(first_name, ' ', last_name) = ?`
@@ -38,4 +38,4 @@ const getFullNames = (arr) => {
   return arr.map(row => `${row.first_name} ${row.last_name}`);
 }
 
-module.exports = { selectStr, selectWildStr, selectDepartmentId, selectRoleId, selectEmployeeNames, selectEmployeeId, selectManagers, selectEmployeeDepartment, updateRole, updateManager, newDepartmentQuery, newRoleQuery, newEmployeeQuery, deleteFromQuery, deleteEmployeeQuery, searchFor, determineId, getFullNames }
+module.exports = { selectStr, selectDepartmentId, selectRoleId, selectEmployeeNames, selectEmployeeId, selectManagers, selectEmployeeDepartment, selectTotalSalary, updateRole, updateManager, newDepartmentQuery, newRoleQuery, newEmployeeQuery, deleteFromQuery, deleteEmployeeQuery, searchFor, determineId, getFullNames }
