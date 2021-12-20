@@ -20,12 +20,12 @@ const deleteEmployeeQuery = `DELETE FROM employee WHERE CONCAT(first_name, ' ', 
 // Helper functions
 // Searches for a particular value from a table
 const searchFor = (arr, compareKey, term, desiredKey) => {
-  const [ newArr ] = arr.filter(element => element[compareKey] === term)
+  const [newArr] = arr.filter(element => element[compareKey] === term)
   return newArr[desiredKey];
 }
 // Determines the given employee's ID
 const determineId = (employeeTable, employeeName) => {
-  if(employeeName === 'None') return null;
+  if (employeeName === 'None') return null;
   const [employeeRow] = employeeTable.filter(employee => `${employee.first_name} ${employee.last_name}` === employeeName)
   return employeeRow.id;
 }

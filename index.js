@@ -319,7 +319,7 @@ const caseSwitch = async (choice) => {
     case 'Add department': addDepartment();
       break;
     case 'View department budget': printBudget();
-      break; 
+      break;
     case 'Quit': console.log('Thanks for being you!')
       process.exit();
   }
