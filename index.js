@@ -38,6 +38,7 @@ const printAllTable = async (choice) => {
   init();
 }
 
+// Prints employees by department
 const printEmployeeDepartment = async () => {
   const [rows] = await promisePool.query(selectEmployeeDepartment)
   console.table(rows)
@@ -51,6 +52,7 @@ const printEmployeeManager = async () => {
   init();
 }
 
+// Prints the total salary budget of the chosen department
 const printBudget = async () => {
   // Retrieves department table and stores it in an array
   const departmentArr = await selectAllFromTable('department');
