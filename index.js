@@ -4,7 +4,7 @@ const inquirer = require('inquirer');
 const config = require('./package.json');
 const mysql = require('mysql2');
 require('console.table');
-// Query strings
+// Query strings and helper functions
 const { selectStr, selectEmployeeManager, newDepartmentQuery, newRoleQuery, newEmployeeQuery, updateRole, updateManager, deleteFromQuery, deleteEmployeeQuery, searchFor, getFullNames, determineId, selectEmployeeDepartment, selectTotalSalary } = require('./db/utils')
 
 // Creating connection with database
@@ -70,7 +70,7 @@ const printBudget = async () => {
   let totalSalary = 0;
   // Adds all salaries together
   rows.forEach(row => totalSalary += Number(row.salary))
-  console.log(`$${totalSalary.toLocaleString("en-US")} are currently being spent on salaries in ${department}.`);
+  console.log(`$${totalSalary.toLocaleString("en-US")} is currently being spent on salaries in ${department}.`);
   init();
 }
 
