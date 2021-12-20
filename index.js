@@ -5,7 +5,7 @@ const config = require('./package.json');
 const mysql = require('mysql2');
 require('console.table');
 // Query strings
-const { selectStr, selectEmployeeId, selectRoleId, selectManagers, selectEmployeeManager, newDepartmentQuery, newRoleQuery, newEmployeeQuery, selectDepartmentId, selectEmployeeNames, updateRole, updateManager, deleteFromQuery, deleteEmployeeQuery, searchFor, getFullNames, determineId, selectEmployeeDepartment, selectTotalSalary } = require('./db/utils')
+const { selectStr, selectEmployeeManager, newDepartmentQuery, newRoleQuery, newEmployeeQuery, updateRole, updateManager, deleteFromQuery, deleteEmployeeQuery, searchFor, getFullNames, determineId, selectEmployeeDepartment, selectTotalSalary } = require('./db/utils')
 
 // Creating connection with database
 const db = mysql.createConnection(
@@ -27,37 +27,6 @@ const selectAllFromTable = async (table) => {
   const [rows] = await promisePool.query(selectStr, table);
   return rows;
 }
-
-// // Retrieves a list of managers
-// // const getManagers = async () => {
-// //   const [rows] = await promisePool.query(selectManagers)
-// //   return rows;
-// // }
-
-// // // Retrieves a given department's ID
-// // const getDepartmentId = async (department) => {
-// //   const [rows] = await promisePool.query(selectDepartmentId, department)
-// //   return rows.map(row => row.id)
-// // }
-
-// // // Retrieves the role title's ID
-// // const getRoleId = async (roleTitle) => {
-// //   const [rows] = await promisePool.query(selectRoleId, roleTitle)
-// //   return rows.map(row => row.id);
-// // }
-
-// // Retrieves an array of concated employee names
-// const getEmployeeNames = async () => {
-//   const [rows] = await promisePool.query(selectEmployeeNames)
-//   return rows.map(row => row.name);
-// }
-
-// // Retrieves a given employee's ID
-// const getEmployeeId = async (name) => {
-//   if(name === 'None') return null;
-//   const [rows] = await promisePool.query(selectEmployeeId, name)
-//   return rows.map(row => row.id)
-// }
 
 // Display functions
 
@@ -281,15 +250,15 @@ const addEmployee = async () => {
 
 // Delete functions
 
+// Removes a department or role
 const removeFrom = async (choice) => {
   // Determines which table to delete from
   const table = choice.split(' ')[1];
   const tableInfo = await selectAllFromTable(table);
-  // Determines if table is department or role then sets row name const
-  if (table === 'department') rowName = 'name'
-  else if (table === 'role') rowName = 'title'
-
-  const nameList = tableInfo.map(row => row[rowName])
+  // Determines if table is department or role then sets column name const
+  if (table === 'department') columnName = 'name'
+  else if (table === 'role') columnName = 'title'
+  const nameList = tableInfo.map(row => row[columnName])
   const question = {
     type: 'list',
     name: 'toRemove',
@@ -298,11 +267,12 @@ const removeFrom = async (choice) => {
   }
   const { toRemove } = await inquirer.prompt(question);
   // Deletes selected item from table
-  await promisePool.query(deleteFromQuery, [table, rowName, toRemove])
+  await promisePool.query(deleteFromQuery, [table, columnName, toRemove])
   console.log(`${toRemove} was removed.`)
   init();
 }
 
+// Removes an employee
 const removeEmployee = async () => {
   // Retrieves an array of employee names 
   const employeeTable = await selectAllFromTable('employee');
@@ -368,4 +338,5 @@ const init = async () => {
 
 // asciiart-logo styled splash screen
 console.log(logo(config).render());
+
 init();
