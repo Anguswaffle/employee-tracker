@@ -5,7 +5,7 @@ const config = require('./package.json');
 const mysql = require('mysql2');
 require('console.table');
 // Query strings
-const { selectStr, selectEmployeeId, selectRoleId, selectManagers, newDepartmentQuery, newRoleQuery, newEmployeeQuery, selectDepartmentId, selectEmployeeNames, updateRole, updateManager, deleteFromQuery, deleteEmployeeQuery, searchFor, getFullNames, determineId, selectEmployeeDepartment, selectTotalSalary } = require('./db/utils')
+const { selectStr, selectEmployeeId, selectRoleId, selectManagers, selectEmployeeManager, newDepartmentQuery, newRoleQuery, newEmployeeQuery, selectDepartmentId, selectEmployeeNames, updateRole, updateManager, deleteFromQuery, deleteEmployeeQuery, searchFor, getFullNames, determineId, selectEmployeeDepartment, selectTotalSalary } = require('./db/utils')
 
 // Creating connection with database
 const db = mysql.createConnection(
@@ -71,6 +71,13 @@ const printAllTable = async (choice) => {
 
 const printEmployeeDepartment = async () => {
   const [rows] = await promisePool.query(selectEmployeeDepartment)
+  console.table(rows)
+  init();
+}
+
+// Prints a table of employee IDs, names, and their manager's employee ID
+const printEmployeeManager = async () => {
+  const [rows] = await promisePool.query(selectEmployeeManager)
   console.table(rows)
   init();
 }
@@ -327,6 +334,8 @@ const caseSwitch = async (choice) => {
       break;
     case 'View all employees by department': printEmployeeDepartment();
       break;
+    case 'View all employees by manager': printEmployeeManager();
+      break;
     case 'Add employee': addEmployee();
       break;
     case 'Update employee role': changeEmployeeRole();
@@ -350,7 +359,7 @@ const init = async () => {
     type: 'list',
     name: 'root',
     message: 'What would you like to do?',
-    choices: ['View all employees', 'View all employees by department', 'Add employee', 'Remove employee', 'Update employee role', `Change an employee's manager`, 'View all roles', 'Add role', 'Remove role', 'View all departments', 'Add department', 'Remove department', 'View department budget', 'Quit']
+    choices: ['View all employees', 'View all employees by department', 'View all employees by manager', 'Add employee', 'Remove employee', 'Update employee role', `Change an employee's manager`, 'View all roles', 'Add role', 'Remove role', 'View all departments', 'Add department', 'Remove department', 'View department budget', 'Quit']
   }
   const { root } = await inquirer.prompt(question);
   // Takes the answer and performs the appropriate function
