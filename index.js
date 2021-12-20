@@ -92,9 +92,9 @@ const printBudget = async () => {
   // All the salaries from chosen department
   const [rows] = await promisePool.query(selectTotalSalary, id);
   let totalSalary = 0;
-  // Adds all salaries
+  // Adds all salaries together
   rows.forEach(row => totalSalary += Number(row.salary))
-  console.log(`$${totalSalary.toLocaleString("en-US")} is the the current combined salaries for everyone in ${department}.`);
+  console.log(`$${totalSalary.toLocaleString("en-US")} are currently being spent on salaries in ${department}.`);
   init();
 }
 
@@ -263,7 +263,7 @@ const addEmployee = async () => {
   // Awaits answers to questions
   const { firstName, lastName, newEmployeeRole, managerName } = await inquirer.prompt(questions);
   // Determines the role ID
-  const roleId = searchFor(roleTable, 'title', newEmployeeRole);
+  const roleId = searchFor(roleTable, 'title', newEmployeeRole, 'id');
   // Determines the chosen manager's ID
   const managerId = determineId(employeeTable, managerName)
   // Insert query for new employee
