@@ -17,8 +17,8 @@ const deleteFromQuery = `DELETE FROM ?? WHERE id = ?`
 
 // Helper functions
 // Searches for a particular value from a table
-const searchFor = (arr, compareKey, term, desiredKey) => {
-  const [newArr] = arr.filter(element => element[compareKey] === term)
+const searchFor = (arr, knownKey, knownValue, desiredKey) => {
+  const [newArr] = arr.filter(element => element[knownKey] === knownValue)
   return newArr[desiredKey];
 }
 // Determines the given employee's ID
