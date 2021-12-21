@@ -4,9 +4,8 @@ const selectEmployeeDepartment = `SELECT employee.id, CONCAT(first_name, ' ', la
 const selectTotalSalary = `SELECT salary FROM role JOIN employee ON employee.role_id = role.id WHERE department_id = ?`
 const selectEmployeeManager = `SELECT id AS employee_id, CONCAT(first_name, ' ', last_name) AS name, manager_id AS manager_employee_id FROM employee ORDER BY manager_id DESC`
 
-// Update strings
-const updateRole = `UPDATE employee SET role_id = ? WHERE CONCAT(first_name, ' ', last_name) = ?`
-const updateManager = `UPDATE employee SET manager_id = ? WHERE CONCAT(first_name, ' ', last_name) = ?`
+// Update string
+const updateEmployee = `UPDATE employee SET ?? = ? WHERE id = ?`
 
 // Strings for querying inserts
 const newDepartmentQuery = `INSERT INTO department (name) VALUES (?)`
@@ -34,4 +33,4 @@ const getFullNames = (arr) => {
   return arr.map(row => `${row.first_name} ${row.last_name}`);
 }
 
-module.exports = { selectStr, selectEmployeeManager, newDepartmentQuery, newRoleQuery, newEmployeeQuery, updateRole, updateManager, deleteFromQuery, deleteEmployeeQuery, searchFor, getFullNames, determineId, selectEmployeeDepartment, selectTotalSalary }
+module.exports = { selectStr, selectEmployeeManager, newDepartmentQuery, newRoleQuery, newEmployeeQuery, updateEmployee, deleteFromQuery, deleteEmployeeQuery, searchFor, getFullNames, determineId, selectEmployeeDepartment, selectTotalSalary }

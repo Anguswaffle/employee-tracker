@@ -5,7 +5,7 @@ const config = require('./package.json');
 const mysql = require('mysql2');
 require('console.table');
 // Query strings and helper functions
-const { selectStr, selectEmployeeManager, newDepartmentQuery, newRoleQuery, newEmployeeQuery, updateRole, updateManager, deleteFromQuery, deleteEmployeeQuery, searchFor, getFullNames, determineId, selectEmployeeDepartment, selectTotalSalary } = require('./db/utils')
+const { selectStr, selectEmployeeManager, newDepartmentQuery, newRoleQuery, newEmployeeQuery, updateEmployee,  deleteFromQuery, deleteEmployeeQuery, searchFor, getFullNames, determineId, selectEmployeeDepartment, selectTotalSalary } = require('./db/utils')
 
 // Creating connection with database
 const db = mysql.createConnection(
@@ -101,10 +101,11 @@ const changeEmployeeRole = async () => {
     }
   ]
   const { employee, newRole } = await inquirer.prompt(questions)
+  const employeeId = determineId(employeeTable, employee)
   // Deconstructs role id from role table
   const roleId = searchFor(roleTable, 'title', newRole, 'id')
   // Query that updates employee info
-  await promisePool.query(updateRole, [roleId, employee])
+  await promisePool.query(updateEmployee, ['role_id', roleId, employeeId])
   console.log(`${employee} was updated.`);
   init();
 }
@@ -129,10 +130,11 @@ const changeManager = async () => {
     }
   ]
   const { employee, managerName } = await inquirer.prompt(questions);
+  const employeeId = determineId(employeeTable, employee);
   // Determines manager's ID, returns null if no new manager
   const managerId = determineId(employeeTable, managerName)
   // Update query
-  await promisePool.query(updateManager, [managerId, employee])
+  await promisePool.query(updateEmployee, ['manager_id', managerId, employeeId])
   console.log(`${employee}'s manager was changed.`)
   init();
 }
