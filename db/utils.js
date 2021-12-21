@@ -12,9 +12,8 @@ const newDepartmentQuery = `INSERT INTO department (name) VALUES (?)`
 const newRoleQuery = `INSERT INTO role (title, salary, department_id) VALUES (?, ?, ?)`
 const newEmployeeQuery = `INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?)`
 
-// Delete strings
-const deleteFromQuery = `DELETE FROM ?? WHERE ?? = ?`
-const deleteEmployeeQuery = `DELETE FROM employee WHERE CONCAT(first_name, ' ', last_name) = ?`
+// Delete string
+const deleteFromQuery = `DELETE FROM ?? WHERE id = ?`
 
 // Helper functions
 // Searches for a particular value from a table
@@ -33,4 +32,4 @@ const getFullNames = (arr) => {
   return arr.map(row => `${row.first_name} ${row.last_name}`);
 }
 
-module.exports = { selectStr, selectEmployeeManager, newDepartmentQuery, newRoleQuery, newEmployeeQuery, updateEmployee, deleteFromQuery, deleteEmployeeQuery, searchFor, getFullNames, determineId, selectEmployeeDepartment, selectTotalSalary }
+module.exports = { selectStr, selectEmployeeManager, newDepartmentQuery, newRoleQuery, newEmployeeQuery, updateEmployee, deleteFromQuery, searchFor, getFullNames, determineId, selectEmployeeDepartment, selectTotalSalary }

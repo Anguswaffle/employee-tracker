@@ -5,7 +5,7 @@ const config = require('./package.json');
 const mysql = require('mysql2');
 require('console.table');
 // Query strings and helper functions
-const { selectStr, selectEmployeeManager, newDepartmentQuery, newRoleQuery, newEmployeeQuery, updateEmployee,  deleteFromQuery, deleteEmployeeQuery, searchFor, getFullNames, determineId, selectEmployeeDepartment, selectTotalSalary } = require('./db/utils')
+const { selectStr, selectEmployeeManager, newDepartmentQuery, newRoleQuery, newEmployeeQuery, updateEmployee, deleteFromQuery, searchFor, getFullNames, determineId, selectEmployeeDepartment, selectTotalSalary } = require('./db/utils')
 
 // Creating connection with database
 const db = mysql.createConnection(
@@ -270,8 +270,9 @@ const removeFrom = async (choice) => {
     choices: nameList
   }
   const { toRemove } = await inquirer.prompt(question);
+  const id = searchFor(tableInfo, columnName, toRemove, 'id')
   // Deletes selected item from table
-  await promisePool.query(deleteFromQuery, [table, columnName, toRemove])
+  await promisePool.query(deleteFromQuery, [table, id])
   console.log(`${toRemove} was removed.`)
   init();
 }
@@ -288,7 +289,8 @@ const removeEmployee = async () => {
     choices: employeeNames
   }
   const { employee } = await inquirer.prompt(question);
-  await promisePool.query(deleteEmployeeQuery, employee);
+  const employeeId = determineId(employeeTable, employee)
+  await promisePool.query(deleteFromQuery, ['employee', employeeId]);
   console.log(`${employee} was removed.`)
   init();
 }
