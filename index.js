@@ -35,21 +35,18 @@ const printAllTable = async (choice) => {
   const table = choice.split(' ')[2].slice(0, -1);
   const data = await selectAllFromTable(table);
   console.table(`${table.toUpperCase()}S`, data);
-  init();
 }
 
 // Prints employees by department
 const printEmployeeDepartment = async () => {
   const [rows] = await promisePool.query(selectEmployeeDepartment)
   console.table(rows)
-  init();
 }
 
 // Prints a table of employee IDs, names, and their manager's employee ID
 const printEmployeeManager = async () => {
   const [rows] = await promisePool.query(selectEmployeeManager)
   console.table(rows)
-  init();
 }
 
 // Prints the total salary budget of the chosen department
@@ -73,7 +70,6 @@ const printBudget = async () => {
   // Adds all salaries together
   rows.forEach(row => totalSalary += Number(row.salary))
   console.log(`$${totalSalary.toLocaleString("en-US")} is currently being spent on salaries in ${department}.`);
-  init();
 }
 
 // Update functions
@@ -107,7 +103,6 @@ const changeEmployeeRole = async () => {
   // Query that updates employee info
   await promisePool.query(updateEmployee, ['role_id', roleId, employeeId])
   console.log(`${employee} was updated.`);
-  init();
 }
 
 // Updates an emploee's manager
@@ -136,7 +131,6 @@ const changeManager = async () => {
   // Update query
   await promisePool.query(updateEmployee, ['manager_id', managerId, employeeId])
   console.log(`${employee}'s manager was changed.`)
-  init();
 }
 
 // Insert functions
@@ -157,7 +151,6 @@ const addDepartment = async () => {
   // Insert query for new department
   await promisePool.query(newDepartmentQuery, newDepartment);
   console.log(`${newDepartment} was added.`);
-  init();
 }
 
 // Adds a new role to the database
@@ -197,7 +190,6 @@ const addRole = async () => {
   // Insert query for new role
   await promisePool.query(newRoleQuery, [newRole, salary, departmentId]);
   console.log(`${newRole} was added.`);
-  init();
 }
 
 // Adds a new employee to the database
@@ -249,7 +241,6 @@ const addEmployee = async () => {
   // Insert query for new employee
   await promisePool.query(newEmployeeQuery, [firstName, lastName, roleId, managerId])
   console.log(`${firstName} ${lastName} was added.`)
-  init();
 }
 
 // Delete functions
@@ -274,7 +265,6 @@ const removeFrom = async (choice) => {
   // Deletes selected item from table
   await promisePool.query(deleteFromQuery, [table, id])
   console.log(`${toRemove} was removed.`)
-  init();
 }
 
 // Removes an employee
@@ -292,7 +282,6 @@ const removeEmployee = async () => {
   const employeeId = determineId(employeeTable, employee)
   await promisePool.query(deleteFromQuery, ['employee', employeeId]);
   console.log(`${employee} was removed.`)
-  init();
 }
 
 // Takes in a task and switches to the appropriate function
@@ -301,31 +290,29 @@ const caseSwitch = async (choice) => {
     // All three of these choices function the same way. Each returns all data from a specified table
     case 'View all departments':
     case 'View all roles':
-    case 'View all employees': printAllTable(choice);
+    case 'View all employees': await printAllTable(choice);
       break;
     case 'Remove department':
-    case 'Remove role': removeFrom(choice);
+    case 'Remove role': await removeFrom(choice);
       break;
-    case 'Remove employee': removeEmployee();
+    case 'Remove employee': await removeEmployee();
       break;
-    case 'View all employees by department': printEmployeeDepartment();
+    case 'View all employees by department': await printEmployeeDepartment();
       break;
-    case 'View all employees by manager': printEmployeeManager();
+    case 'View all employees by manager': await printEmployeeManager();
       break;
-    case 'Add employee': addEmployee();
+    case 'Add employee': await addEmployee();
       break;
-    case 'Update employee role': changeEmployeeRole();
+    case 'Update employee role': await changeEmployeeRole();
       break;
-    case `Change an employee's manager`: changeManager();
+    case `Change an employee's manager`: await changeManager();
       break;
-    case 'Add role': addRole();
+    case 'Add role': await addRole();
       break;
-    case 'Add department': addDepartment();
+    case 'Add department': await addDepartment();
       break;
-    case 'View department budget': printBudget();
+    case 'View department budget': await printBudget();
       break;
-    case 'Quit': console.log('Thanks for being you!')
-      process.exit();
   }
 }
 
@@ -339,7 +326,10 @@ const init = async () => {
   }
   const { root } = await inquirer.prompt(question);
   // Takes the answer and performs the appropriate function
-  caseSwitch(root);
+  await caseSwitch(root);
+  // Determines whether or not to run init() again
+  const again = root !== 'Quit'
+  return again ? await init() : process.exit()
 }
 
 // asciiart-logo styled splash screen
