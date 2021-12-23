@@ -329,7 +329,7 @@ const init = async () => {
   await caseSwitch(root);
   // Determines whether or not to run init() again
   const again = root !== 'Quit'
-  return again ? await init() : process.exit()
+  return again ? init() : process.exit()
 }
 
 // asciiart-logo styled splash screen
